@@ -1,0 +1,54 @@
+// =====================================================================
+//  REGLAS DE SEGURIDAD DE FIRESTORE
+//  Sistema IoT de seguridad doméstica
+//
+//  PROPÓSITO
+//  Estas reglas controlan QUIÉN puede LEER y ESCRIBIR cada colección.
+//  Por defecto Firestore deniega todo; aquí abrimos solo lo necesario.
+//
+//  CÓMO APLICAR ESTAS REGLAS
+//  1. Ir a Firebase Console -> Firestore Database -> pestaña Reglas
+//  2. Reemplazar todo el contenido con este archivo
+//  3. Pulsar "Publicar"
+//
+//  ESTRUCTURA DE COLECCIONES
+//   /usuarios/{uid}   -> perfil de cada usuario (nombre, permisos, rol)
+//   /eventos/{auto}   -> historial de eventos del sistema
+// =====================================================================
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Colección usuarios ----------
+    // Cada usuario puede leer su propio perfil.
+    // Los administradores pueden leer y escribir cualquier perfil.
+    match /usuarios/{uid} {
+
+      // LECTURA: el propio usuario, o cualquier administrador.
+      allow read: if request.auth != null
+                  && (request.auth.uid == uid
+                      || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin');
+
+      // ESCRITURA: cualquier administrador, O un usuario nuevo creando su propio documento
+      // (esto último permite que el panel admin cree el documento justo después de
+      // crear la cuenta en Authentication).
+      allow create: if request.auth != null
+                    && (request.auth.uid == uid
+                        || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin');
+
+      allow update, delete: if request.auth != null
+                            && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin';
+    }
+
+    // ---------- Colección eventos ----------
+    // Cualquier usuario autenticado puede leer el historial.
+    // Solo el puente Node.js puede escribir (lo hace con cuenta de servicio,
+    // que ignora estas reglas automáticamente).
+    match /eventos/{eventoId} {
+      allow read:  if request.auth != null;
+      allow write: if false;   // Solo el SDK admin del puente puede escribir
+    }
+  }
+}

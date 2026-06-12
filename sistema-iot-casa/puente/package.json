@@ -1,0 +1,16 @@
+{
+  "name": "puente-iot-casa",
+  "version": "2.0.0",
+  "description": "Puente Node.js que conecta el broker MQTT con Firebase para el sistema IoT de seguridad doméstica",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Manuela Rivera Gómez, Janier Alexander Rojas Giraldo, Luis Alfonso Ortiz Ruiz",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "firebase-admin": "^12.7.0",
+    "mqtt": "^5.10.1"
+  }
+}

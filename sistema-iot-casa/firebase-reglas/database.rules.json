@@ -1,0 +1,68 @@
+// =====================================================================
+//  REGLAS DE SEGURIDAD DE REALTIME DATABASE
+//  Sistema IoT de seguridad doméstica
+//
+//  CÓMO APLICAR ESTAS REGLAS
+//  1. Ir a Firebase Console -> Realtime Database -> pestaña Reglas
+//  2. Reemplazar todo el contenido con este archivo
+//  3. Pulsar "Publicar"
+//
+//  NOTA: el editor de Firebase admite comentarios "//" aunque JSON
+//  estricto no los permita.
+// =====================================================================
+
+{
+  "rules": {
+
+    // Estados en vivo del dispositivo (publicados por el puente).
+    // Solo lectura para usuarios autenticados.
+    "estado": {
+      ".read":  "auth != null",
+      ".write": false
+    },
+
+    // Estado online/offline del dispositivo y de cada nodo.
+    // Solo lectura.
+    "disponibilidad": {
+      ".read":  "auth != null",
+      ".write": false
+    },
+
+    // Último evento por nodo (para mostrar alertas en vivo en la web).
+    "ultimoEvento": {
+      ".read":  "auth != null",
+      ".write": false
+    },
+
+    // Comandos que la web envía al dispositivo.
+    // Cada nodo requiere su permiso específico.
+    "comandos": {
+      "puerta": {
+        ".read":  "auth != null && root.child('usuarios/' + auth.uid + '/permisoPuerta').val() == true",
+        ".write": "auth != null && root.child('usuarios/' + auth.uid + '/permisoPuerta').val() == true"
+      },
+      "garaje": {
+        ".read":  "auth != null && root.child('usuarios/' + auth.uid + '/permisoGaraje').val() == true",
+        ".write": "auth != null && root.child('usuarios/' + auth.uid + '/permisoGaraje').val() == true"
+      }
+    },
+
+    // Espejo de permisos (lo escribe el puente desde Firestore).
+    // Cada usuario solo puede leer su propio nodo.
+    "usuarios": {
+      "$uid": {
+        ".read":  "auth != null && auth.uid == $uid",
+        ".write": false
+      }
+    },
+
+    // Tokens FCM (notificaciones push) por usuario y dispositivo.
+    // Cada usuario solo escribe y lee sus propios tokens.
+    "fcmTokens": {
+      "$uid": {
+        ".read":  "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    }
+  }
+}
